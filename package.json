@@ -15,6 +15,7 @@
 	],
 	"license": "MIT",
 	"devDependencies": {
+		"@types/node": "^10.12.10",
 		"@zxnode/build": "0.0.30"
 	},
 	"dependencies": {
