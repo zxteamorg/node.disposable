@@ -35,7 +35,7 @@
 	"homepage": "https://dev.zxteam.net/pub/node/disposable",
 	"scripts": {
 		"build": "zxbuild clean dist",
-		"test": "zxbuild compile:test && nyc --exclude submodules --exclude test --reporter=lcov --reporter=text --reporter=text-summary mocha 'test/**/*.test.js' --recursive"
+		"test": "nyc --exclude submodules --exclude test --reporter=lcov --reporter=text --reporter=text-summary mocha 'test/**/*.test.js' --recursive"
 	},
 	"private": true
 }

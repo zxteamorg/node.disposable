@@ -42,38 +42,26 @@ export function using<TDisposable extends DisposableLike, TResult>(
 	if (!disposable) { throw new Error("Wrong argument: disposable"); }
 	if (!worker) { throw new Error("Wrong argument: worker"); }
 
-
-	function workerExecutor(disposableObject: TDisposable): Promise<TResult> {
-		const workerResult = worker(disposableObject);
-		if (workerResult instanceof Promise) {
-			return workerResult;
-		} else {
-			return Promise.resolve(workerResult);
-		}
-	}
-
-	function finalize(disposableObject: TDisposable): Promise<TResult> {
-		function dispose() {
-			return disposableObject.dispose().catch(function (reason) {
+	async function workerExecutor(disposableObject: TDisposable): Promise<TResult> {
+		try {
+			return await worker(disposableObject);
+		} finally {
+			try {
+				await disposableObject.dispose();
+			} catch (e) {
 				console.error(
 					"Dispose method raised an error." +
 					+ "This is unexpected behavoir due dispose() should be exception safe.",
-					reason);
-			});
-		}
-
-		try {
-			return workerExecutor(disposableObject).finally(dispose);
-		} finally {
-			dispose();
+					e);
+			}
 		}
 	}
 
 	if (disposable instanceof Promise) {
 		return disposable.then(function (realDisposable) {
-			return finalize(realDisposable);
+			return workerExecutor(realDisposable);
 		});
 	} else {
-		return finalize(disposable());
+		return workerExecutor(disposable());
 	}
 }
