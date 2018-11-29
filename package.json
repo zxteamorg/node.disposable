@@ -1,7 +1,7 @@
 {
 	"name": "@zxteam/disposable",
-	"version": "0.0.0",
-	"description": "TBD",
+	"version": "1.0.0",
+	"description": "Implementation of DisposableLike interface",
 	"author": {
 		"name": "Maxim Anurin",
 		"email": "maxim.anurin@zxteam.org",
@@ -15,14 +15,10 @@
 	],
 	"license": "MIT",
 	"devDependencies": {
-		"@types/mocha": "^5.2.5",
-		"@types/node": "^10.12.9",
-		"@zxnode/build": "0.0.30",
-		"mocha": "^5.2.0",
-		"nyc": "^13.1.0"
+		"@zxnode/build": "0.0.30"
 	},
 	"dependencies": {
-		"@zxteam/contract": "0.0.0-pre002"
+		"@zxteam/contract": "^1.0.0"
 	},
 	"keywords": [],
 	"repository": {
