@@ -28,7 +28,7 @@ export abstract class Disposable implements DisposableLike {
 
 	protected abstract onDispose(): void | Promise<void>;
 
-	protected verifyDestroy() {
+	protected verifyDisposed() {
 		if (this.disposed || this.disposing) {
 			throw new Error("Wrong operation on disposed object");
 		}
