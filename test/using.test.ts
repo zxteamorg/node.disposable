@@ -51,7 +51,7 @@ describe("using tests", function () {
 	});
 	it("Should NOT fail if dispose() raise an error", async function () {
 		let executed = false;
-		await using(() => ({ dispose: () => Promise.reject(new Error("Abnormal error")) }), (instance) => {
+		await using(() => ({ dispose: () => Promise.reject(new Error("Expected abnormal error")) }), (instance) => {
 			executed = true;
 		});
 		assert.isTrue(executed);

@@ -20,13 +20,14 @@ function nextTick(): Promise<void> {
 	return new Promise<void>(resolve => process.nextTick(resolve));
 }
 
+
 describe("Disposable tests", function () {
 
 	let onDisposePromise: Promise<void> | null = null;
 
 	class TestDisposable extends Disposable {
-		public verifyDisposed() {
-			super.verifyDisposed();
+		public verifyNotDisposed() {
+			super.verifyNotDisposed();
 		}
 
 		protected onDispose(): void | Promise<void> {
@@ -41,7 +42,7 @@ describe("Disposable tests", function () {
 		assert.isFalse(disposable.disposed);
 		assert.isFalse(disposable.disposing);
 
-		disposable.verifyDisposed(); // should not raise an error
+		disposable.verifyNotDisposed(); // should not raise an error
 
 		const defer = Deferred.create();
 		onDisposePromise = defer.promise;
@@ -50,12 +51,12 @@ describe("Disposable tests", function () {
 			const disposablePromise = disposable.dispose().then(() => { disposablePromiseResolved = true; });
 
 			assert.isFalse(disposablePromiseResolved);
-			assert.throw(() => disposable.verifyDisposed());
+			assert.throw(() => disposable.verifyNotDisposed());
 
 			await nextTick();
 
 			assert.isFalse(disposablePromiseResolved);
-			assert.throw(() => disposable.verifyDisposed());
+			assert.throw(() => disposable.verifyNotDisposed());
 
 			assert.isFalse(disposable.disposed);
 			assert.isTrue(disposable.disposing);
@@ -69,7 +70,7 @@ describe("Disposable tests", function () {
 
 			assert.isFalse(disposablePromiseResolved);
 			assert.isFalse(secondDisposablePromiseResolved);
-			assert.throw(() => disposable.verifyDisposed());
+			assert.throw(() => disposable.verifyNotDisposed());
 			assert.isFalse(disposable.disposed);
 			assert.isTrue(disposable.disposing);
 
@@ -77,13 +78,13 @@ describe("Disposable tests", function () {
 
 			assert.isFalse(disposablePromiseResolved);
 			assert.isFalse(secondDisposablePromiseResolved);
-			assert.throw(() => disposable.verifyDisposed());
+			assert.throw(() => disposable.verifyNotDisposed());
 
 			await nextTick();
 
 			assert.isTrue(disposablePromiseResolved);
 			assert.isTrue(secondDisposablePromiseResolved);
-			assert.throw(() => disposable.verifyDisposed());
+			assert.throw(() => disposable.verifyNotDisposed());
 
 			assert.isTrue(disposable.disposed);
 			assert.isFalse(disposable.disposing);
@@ -103,25 +104,25 @@ describe("Disposable tests", function () {
 		assert.isFalse(disposable.disposed);
 		assert.isFalse(disposable.disposing);
 
-		disposable.verifyDisposed(); // should not raise an error
+		disposable.verifyNotDisposed(); // should not raise an error
 
 		const disposablePromise = disposable.dispose();
 
 		assert.isTrue(disposable.disposed);
 		assert.isFalse(disposable.disposing);
 
-		assert.throw(() => disposable.verifyDisposed());
+		assert.throw(() => disposable.verifyNotDisposed());
 
 		await nextTick();
 
-		assert.throw(() => disposable.verifyDisposed());
+		assert.throw(() => disposable.verifyNotDisposed());
 
 		assert.isTrue(disposable.disposed);
 		assert.isFalse(disposable.disposing);
 
 		await disposablePromise;
 
-		assert.throw(() => disposable.verifyDisposed());
+		assert.throw(() => disposable.verifyNotDisposed());
 
 		assert.isTrue(disposable.disposed);
 		assert.isFalse(disposable.disposing);
