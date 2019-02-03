@@ -1,6 +1,6 @@
 {
 	"name": "@zxteam/disposable",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "Implementation of DisposableLike interface",
 	"author": {
 		"name": "Maxim Anurin",
@@ -15,11 +15,11 @@
 	],
 	"license": "MIT",
 	"devDependencies": {
-		"@types/node": "^10.12.10",
+		"@types/node": "^10.12.21",
 		"@zxnode/build": "0.0.30"
 	},
 	"dependencies": {
-		"@zxteam/contract": "1.0.5"
+		"@zxteam/contract": "^1.0.6"
 	},
 	"keywords": [],
 	"repository": {
