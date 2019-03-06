@@ -1,8 +1,8 @@
-import { DisposableLike } from "@zxteam/contract";
+import { DisposableLike, TaskLike } from "@zxteam/contract";
 
 export function using<TDisposable extends DisposableLike, TResult>(
 	disposable: (() => TDisposable) | Promise<TDisposable>,
-	worker: (disposable: TDisposable) => TResult | Promise<TResult>
+	worker: (disposable: TDisposable) => TResult | Promise<TResult> | TaskLike<TResult>
 ): Promise<TResult> {
 	if (!disposable) { throw new Error("Wrong argument: disposable"); }
 	if (!worker) { throw new Error("Wrong argument: worker"); }
@@ -21,7 +21,7 @@ export function using<TDisposable extends DisposableLike, TResult>(
 		}
 	}
 
-	if (disposable instanceof Promise) {
+	if (("then" in disposable && typeof disposable.then === "function") || disposable instanceof Promise) {
 		return disposable.then(function (realDisposable) {
 			return workerExecutor(realDisposable);
 		});
