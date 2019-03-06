@@ -1,6 +1,6 @@
 {
 	"name": "@zxteam/disposable",
-	"version": "2.0.1",
+	"version": "2.0.2",
 	"description": "Implementation of DisposableLike interface",
 	"author": {
 		"name": "Maxim Anurin",

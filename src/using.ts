@@ -1,7 +1,7 @@
 import { DisposableLike, TaskLike } from "@zxteam/contract";
 
 export function using<TDisposable extends DisposableLike, TResult>(
-	disposable: (() => TDisposable) | Promise<TDisposable>,
+	disposable: (() => TDisposable) | Promise<TDisposable> | TaskLike<TDisposable>,
 	worker: (disposable: TDisposable) => TResult | Promise<TResult> | TaskLike<TResult>
 ): Promise<TResult> {
 	if (!disposable) { throw new Error("Wrong argument: disposable"); }
@@ -21,11 +21,16 @@ export function using<TDisposable extends DisposableLike, TResult>(
 		}
 	}
 
-	if (("then" in disposable && typeof disposable.then === "function") || disposable instanceof Promise) {
-		return disposable.then(function (realDisposable) {
+	if (typeof disposable === "function") {
+		const friendlyDisposable: () => TDisposable = disposable;
+		return workerExecutor(friendlyDisposable());
+	} else if (disposable instanceof Promise) {
+		const friendlyDisposable: Promise<TDisposable> = disposable;
+		return friendlyDisposable.then(function (realDisposable) {
 			return workerExecutor(realDisposable);
 		});
 	} else {
-		return workerExecutor(disposable());
+		const friendlyDisposable: TaskLike<TDisposable> = disposable;
+		return (async () => workerExecutor(await friendlyDisposable))();
 	}
 }
