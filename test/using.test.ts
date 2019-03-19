@@ -1,4 +1,6 @@
 import { assert } from "chai";
+import { Task, CancelledError } from "ptask.js";
+
 import { Disposable, using } from "../src";
 
 interface Deferred<T = any> {
@@ -22,7 +24,7 @@ function nextTick(): Promise<void> {
 
 describe("using tests", function () {
 	class TestDisposable extends Disposable {
-		protected onDispose(): void | Promise<void> {
+		protected onDispose(): void | Promise<void> | Task<void> {
 			//
 		}
 	}
@@ -51,7 +53,7 @@ describe("using tests", function () {
 	});
 	it("Should NOT fail if dispose() raise an error", async function () {
 		let executed = false;
-		await using(() => ({ dispose: () => Promise.reject(new Error("Expected abnormal error")) }), (instance) => {
+		await using(() => ({ dispose: () => Task.run(() => { throw new Error("Expected abnormal error"); }) }), (instance) => {
 			executed = true;
 		});
 		assert.isTrue(executed);
@@ -131,5 +133,64 @@ describe("using tests", function () {
 		assert.isTrue(usingPromiseResolved);
 		const result = await usingPromise;
 		assert.equal(result, 42);
+	});
+	it("Should be able to use CancellationToken on init phase", async function () {
+		const cts = Task.createCancellationTokenSource();
+		const token = cts.token;
+
+
+		cts.cancel();
+
+		const disposable: Disposable = new TestDisposable();
+		let err;
+		try {
+			await using(
+				(cancellationToken) => {
+					cancellationToken.throwIfCancellationRequested();
+					return disposable;
+				},
+				(instance, cancellationToken) => {
+					// Do nothing
+				},
+				token
+			);
+		} catch (e) {
+			err = e;
+		}
+
+		assert.isDefined(err);
+		assert.instanceOf(err, CancelledError);
+	});
+	it("Should be able to use CancellationToken on worker phase", async function () {
+		const cts = Task.createCancellationTokenSource();
+		const token = cts.token;
+
+		const disposable: Disposable = new TestDisposable();
+
+		let onDisposeCalled = false;
+		(disposable as any).onDispose = () => {
+			onDisposeCalled = true;
+		};
+
+		let err;
+		try {
+			await using(
+				(cancellationToken) => {
+					cts.cancel();
+					return disposable;
+				},
+				(instance, cancellationToken) => {
+					cancellationToken.throwIfCancellationRequested();
+					// Do nothing
+				},
+				token
+			);
+		} catch (e) {
+			err = e;
+		}
+
+		assert.isDefined(err);
+		assert.instanceOf(err, CancelledError);
+		assert.isTrue(onDisposeCalled);
 	});
 });

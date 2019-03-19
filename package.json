@@ -1,6 +1,6 @@
 {
 	"name": "@zxteam/disposable",
-	"version": "2.0.2",
+	"version": "3.0.0",
 	"description": "Implementation of DisposableLike interface",
 	"author": {
 		"name": "Maxim Anurin",
@@ -19,7 +19,8 @@
 		"@zxnode/build": "0.0.32"
 	},
 	"dependencies": {
-		"@zxteam/contract": "^2.0.0"
+		"@zxteam/contract": "^3.0.0",
+		"ptask.js": "^3.0.0"
 	},
 	"keywords": [],
 	"repository": {

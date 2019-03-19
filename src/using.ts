@@ -1,36 +1,41 @@
-import { DisposableLike, TaskLike } from "@zxteam/contract";
+import { Disposable, Task, CancellationToken } from "@zxteam/contract";
+import { Task as TaskImpl } from "ptask.js";
 
-export function using<TDisposable extends DisposableLike, TResult>(
-	disposable: (() => TDisposable) | Promise<TDisposable> | TaskLike<TDisposable>,
-	worker: (disposable: TDisposable) => TResult | Promise<TResult> | TaskLike<TResult>
-): Promise<TResult> {
+export function using<TDisposable extends Disposable, TResult>(
+	disposable: ((cancellactonToken: CancellationToken) => TDisposable) | Promise<TDisposable> | Task<TDisposable>,
+	worker: (disposable: TDisposable, cancellactonToken: CancellationToken) => TResult | Promise<TResult> | Task<TResult>,
+	cancellactonToken?: CancellationToken
+): Task<TResult> {
 	if (!disposable) { throw new Error("Wrong argument: disposable"); }
 	if (!worker) { throw new Error("Wrong argument: worker"); }
 
-	async function workerExecutor(disposableObject: TDisposable): Promise<TResult> {
-		try {
-			return await worker(disposableObject);
-		} finally {
+	return TaskImpl.run(async (ct) => {
+		async function workerExecutor(disposableObject: TDisposable, workerExecutorCancellactonToken: CancellationToken): Promise<TResult> {
 			try {
-				await disposableObject.dispose();
-			} catch (e) {
-				console.error(
-					"Dispose method raised an error. This is unexpected behavoir due dispose() should be exception safe.",
-					e);
+				return await worker(disposableObject, workerExecutorCancellactonToken);
+			} finally {
+				try {
+					await disposableObject.dispose();
+				} catch (e) {
+					console.error(
+						"Dispose method raised an error. This is unexpected behaviour due dispose() should be exception safe.",
+						e);
+				}
 			}
 		}
-	}
 
-	if (typeof disposable === "function") {
-		const friendlyDisposable: () => TDisposable = disposable;
-		return workerExecutor(friendlyDisposable());
-	} else if (disposable instanceof Promise) {
-		const friendlyDisposable: Promise<TDisposable> = disposable;
-		return friendlyDisposable.then(function (realDisposable) {
-			return workerExecutor(realDisposable);
-		});
-	} else {
-		const friendlyDisposable: TaskLike<TDisposable> = disposable;
-		return (async () => workerExecutor(await friendlyDisposable))();
-	}
+		if (typeof disposable === "function") {
+			const friendlyDisposable: (myCt: CancellationToken) => TDisposable = disposable;
+			return workerExecutor(friendlyDisposable(ct), ct);
+		} else if (disposable instanceof Promise) {
+			const friendlyDisposable: Promise<TDisposable> = disposable;
+			const realDisposable = await friendlyDisposable;
+			return workerExecutor(realDisposable, ct);
+		} else {
+			const friendlyDisposable: Task<TDisposable> = disposable;
+			const realDisposable = await friendlyDisposable;
+			return workerExecutor(realDisposable, ct);
+		}
+	}, cancellactonToken);
+
 }
