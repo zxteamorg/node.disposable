@@ -52,11 +52,31 @@ describe("using tests", function () {
 		assert.isFalse(disposable.disposing);
 	});
 	it("Should NOT fail if dispose() raise an error", async function () {
-		let executed = false;
-		await using(() => ({ dispose: () => Task.run(() => { throw new Error("Expected abnormal error"); }) }), (instance) => {
-			executed = true;
-		});
-		assert.isTrue(executed);
+		const originalConsole = (global as any).console;
+		try {
+			let executed = false;
+
+			let expectedErrorMessage: any;
+			let expectedErrorObj: any;
+
+			(global as any).console = {
+				error(msg: any, err: any) {
+					expectedErrorMessage = msg;
+					expectedErrorObj = err;
+				}
+			};
+			await using(() => ({ dispose: () => Task.run(() => { throw new Error("Expected abnormal error"); }) }), (instance) => {
+				executed = true;
+			});
+			assert.isTrue(executed);
+			assert.isString(expectedErrorMessage);
+			assert.equal(expectedErrorMessage,
+				"Dispose method raised an error. This is unexpected behaviour due dispose() should be exception safe.");
+			assert.instanceOf(expectedErrorObj, Error);
+			assert.equal(expectedErrorObj.message, "Expected abnormal error");
+		} finally {
+			(global as any).console = originalConsole;
+		}
 	});
 	it("Should fail when wrong disposable", async function () {
 		let executed = false;

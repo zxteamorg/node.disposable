@@ -1,6 +1,6 @@
 {
 	"name": "@zxteam/disposable",
-	"version": "3.0.0",
+	"version": "3.0.2",
 	"description": "Implementation of DisposableLike interface",
 	"author": {
 		"name": "Maxim Anurin",
@@ -19,8 +19,8 @@
 		"@zxnode/build": "0.0.32"
 	},
 	"dependencies": {
-		"@zxteam/contract": "^3.0.0",
-		"ptask.js": "^3.0.0"
+		"@zxteam/contract": "^3.0.2",
+		"ptask.js": "^3.0.2"
 	},
 	"keywords": [],
 	"repository": {
@@ -33,7 +33,8 @@
 	"homepage": "https://dev.zxteam.net/pub/node/disposable",
 	"scripts": {
 		"build": "zxbuild clean dist",
-		"test": "nyc --exclude submodules --exclude test --reporter=lcov --reporter=text --reporter=text-summary mocha \"test/**/*.test.js\" --recursive"
+		"test": "nyc --exclude submodules --exclude test --reporter=lcov --reporter=text --reporter=text-summary mocha \"test/**/*.test.js\" --recursive",
+		"test:only": "mocha --require source-map-support/register \"test/**/*.test.js\" --recursive"
 	},
 	"private": true
 }
