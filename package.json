@@ -1,6 +1,6 @@
 {
 	"name": "@zxteam/disposable",
-	"version": "3.0.2",
+	"version": "3.2.1",
 	"description": "Implementation of DisposableLike interface",
 	"author": {
 		"name": "Maxim Anurin",
@@ -9,8 +9,8 @@
 	},
 	"contributors": [
 		{
-			"name": "Serg Zgama",
-			"email": "serg.zgama@zxteam.org"
+			"name": "Serhii Zghama",
+			"email": "serhii.zghama@zxteam.org"
 		}
 	],
 	"license": "MIT",
@@ -19,8 +19,11 @@
 		"@zxnode/build": "0.0.32"
 	},
 	"dependencies": {
-		"@zxteam/contract": "^3.0.2",
-		"ptask.js": "^3.0.2"
+		"@zxteam/contract": "^3.2.1",
+		"ptask.js": "^3.2.1"
+	},
+	"engines": {
+		"node": ">=11"
 	},
 	"keywords": [],
 	"repository": {

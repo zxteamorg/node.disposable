@@ -3,7 +3,7 @@ import { Task as TaskImpl } from "ptask.js";
 
 export abstract class Initable implements InitableLike {
 	private _initialized?: boolean;
-	private _initializingPromise?: Task;
+	private _initializingPromise?: Task<this>;
 	private _disposed?: boolean;
 	private _disposingPromise?: Task;
 
@@ -12,7 +12,7 @@ export abstract class Initable implements InitableLike {
 	public get disposed(): boolean { return this._disposed === true; }
 	public get disposing(): boolean { return this._disposingPromise !== undefined; }
 
-	public init(): Task {
+	public init(): Task<this> {
 		this.verifyNotDisposed();
 		if (!this._initialized) {
 			if (!this._initializingPromise) {
@@ -22,15 +22,16 @@ export abstract class Initable implements InitableLike {
 						await onInitializeResult;
 						this._initialized = true;
 						delete this._initializingPromise;
+						return this;
 					});
 				} else {
 					this._initialized = true;
-					return  TaskImpl.resolve();
+					return  TaskImpl.resolve(this);
 				}
 			}
 			return this._initializingPromise;
 		}
-		return TaskImpl.resolve();
+		return TaskImpl.resolve(this);
 	}
 
 	public dispose(): Task {
