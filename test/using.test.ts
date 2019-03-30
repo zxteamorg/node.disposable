@@ -1,7 +1,7 @@
 import { assert } from "chai";
 import { Task, CancelledError } from "ptask.js";
 
-import { Disposable, using } from "../src";
+import { Disposable, using, Initable } from "../src";
 
 interface Deferred<T = any> {
 	resolve: (value?: T) => void;
@@ -28,6 +28,14 @@ describe("using tests", function () {
 			//
 		}
 	}
+	class TestInitable extends Initable {
+		protected onInit(): void | Promise<void> | Task<void> {
+			//
+		}
+		protected onDispose(): void | Promise<void> | Task<void> {
+			//
+		}
+	}
 
 	it("Should pass Promise result to worker", async function () {
 		const disposable = new TestDisposable();
@@ -40,10 +48,43 @@ describe("using tests", function () {
 		assert.isTrue(disposable.disposed);
 		assert.isFalse(disposable.disposing);
 	});
-	it("Should pass factory result to worker", async function () {
+	it("Should pass Task result to worker", async function () {
+		const disposable = new TestDisposable();
+		let executed = false;
+		await using(Task.resolve(disposable), (instance) => {
+			executed = true;
+			assert.strictEqual(disposable, instance);
+		});
+		assert.isTrue(executed);
+		assert.isTrue(disposable.disposed);
+		assert.isFalse(disposable.disposing);
+	});
+	it("Should pass factory result to worker (result is instance of Disposable)", async function () {
 		let disposable: any;
 		let executed = false;
 		await using(() => (disposable = new TestDisposable()), (instance) => {
+			executed = true;
+			assert.strictEqual(disposable, instance);
+		});
+		assert.isTrue(executed);
+		assert.isTrue(disposable.disposed);
+		assert.isFalse(disposable.disposing);
+	});
+	it("Should pass factory result to worker (result is Promise<Disposable>)", async function () {
+		let disposable: any;
+		let executed = false;
+		await using(() => Promise.resolve(disposable = new TestDisposable()), (instance) => {
+			executed = true;
+			assert.strictEqual(disposable, instance);
+		});
+		assert.isTrue(executed);
+		assert.isTrue(disposable.disposed);
+		assert.isFalse(disposable.disposing);
+	});
+	it("Should pass factory result to worker (result is Task<Disposable>)", async function () {
+		let disposable: any;
+		let executed = false;
+		await using(() => Task.resolve(disposable = new TestDisposable()), (instance) => {
 			executed = true;
 			assert.strictEqual(disposable, instance);
 		});
@@ -212,5 +253,18 @@ describe("using tests", function () {
 		assert.isDefined(err);
 		assert.instanceOf(err, CancelledError);
 		assert.isTrue(onDisposeCalled);
+	});
+	it("Should call init() for Initable", async function () {
+		const initable = new TestInitable();
+		let executedAfterInit = false;
+		await using(Promise.resolve(initable), (instance) => {
+			executedAfterInit = initable.initialized;
+			assert.strictEqual(initable, instance);
+		});
+		assert.isTrue(executedAfterInit);
+		assert.isTrue(initable.initialized);
+		assert.isFalse(initable.initializing);
+		assert.isTrue(initable.disposed);
+		assert.isFalse(initable.disposing);
 	});
 });
