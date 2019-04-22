@@ -1,7 +1,7 @@
 {
 	"name": "@zxteam/disposable",
-	"version": "3.2.2",
-	"description": "Implementation of DisposableLike interface",
+	"version": "3.2.4",
+	"description": "Implementation of Disposable and Initable interfaces",
 	"author": {
 		"name": "Maxim Anurin",
 		"email": "maxim.anurin@zxteam.org",
@@ -15,11 +15,11 @@
 	],
 	"license": "MIT",
 	"devDependencies": {
-		"@types/node": "^10.12.27",
-		"@zxnode/build": "0.0.32"
+		"@types/node": "^11.13.6",
+		"@zxnode/build": "^0.0.33"
 	},
 	"dependencies": {
-		"@zxteam/contract": "^3.2.1",
+		"@zxteam/contract": "^3.2.4",
 		"ptask.js": "^3.2.1"
 	},
 	"engines": {
@@ -39,5 +39,7 @@
 		"test": "nyc --exclude submodules --exclude test --reporter=lcov --reporter=text --reporter=text-summary mocha \"test/**/*.test.js\" --recursive",
 		"test:only": "mocha --require source-map-support/register \"test/**/*.test.js\" --recursive"
 	},
+	"main": "./src/index.js",
+	"types": "./src/index.d.ts",
 	"private": true
 }

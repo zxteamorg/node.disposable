@@ -1,10 +1,14 @@
 import { Disposable, Initable, Task, CancellationToken } from "@zxteam/contract";
 import { Task as TaskImpl } from "ptask.js";
 
-export function using<TDisposable extends Disposable, TInitable extends Initable, TResult>(
+export namespace using {
+	export type ResourceInitializer<T> = ((cancellactonToken: CancellationToken) => T | Promise<T> | Task<T>) | Promise<T> | Task<T>;
+	export type Result<T> = T | Promise<T> | Task<T>;
+}
+export function using<TResource extends Initable | Disposable, TResult>(
 	// tslint:disable-next-line: max-line-length
-	disposable: ((cancellactonToken: CancellationToken) => TInitable | TDisposable | Promise<TInitable | TDisposable> | Task<TInitable | TDisposable>) | Promise<TInitable | TDisposable> | Task<TInitable | TDisposable>,
-	worker: (disposable: TInitable | TDisposable, cancellactonToken: CancellationToken) => TResult | Promise<TResult> | Task<TResult>,
+	disposable: using.ResourceInitializer<TResource>,
+	worker: (disposable: TResource, cancellactonToken: CancellationToken) => using.Result<TResult>,
 	cancellactonToken?: CancellationToken
 ): Task<TResult> {
 	if (!disposable) { throw new Error("Wrong argument: disposable"); }
@@ -12,27 +16,27 @@ export function using<TDisposable extends Disposable, TInitable extends Initable
 
 	return TaskImpl.run(async (ct) => {
 		// tslint:disable-next-line: max-line-length
-		async function workerExecutor(disposableObject: TInitable | TDisposable, workerExecutorCancellactonToken: CancellationToken): Promise<TResult> {
-			if ("init" in disposableObject) {
-				await disposableObject.init();
+		async function workerExecutor(disposableResource: TResource, workerExecutorCancellactonToken: CancellationToken): Promise<TResult> {
+			if ("init" in disposableResource) {
+				await (disposableResource as Initable).init();
 			}
 			try {
-				return await worker(disposableObject, workerExecutorCancellactonToken);
+				return await worker(disposableResource, workerExecutorCancellactonToken);
 			} finally {
 				try {
-					await disposableObject.dispose();
+					await disposableResource.dispose();
 				} catch (e) {
 					console.error(
-						"Dispose method raised an error. This is unexpected behaviour due dispose() should be exception safe.",
+						"Dispose method raised an error. This is unexpected behaviour due dispose() should be exception safe. The error was bypassed.",
 						e);
 				}
 			}
 		}
 
 		// tslint:disable-next-line: max-line-length
-		function workerExecutorFacade(disposableObject: TInitable | TDisposable | Promise<TInitable | TDisposable> | Task<TInitable | TDisposable>): Promise<TResult> {
+		function workerExecutorFacade(disposableObject: TResource | Promise<TResource> | Task<TResource>): Promise<TResult> {
 			if (disposableObject instanceof Promise) {
-				return (disposableObject as Promise<TDisposable>).then(disposableInstance => workerExecutor(disposableInstance, ct));
+				return (disposableObject as Promise<TResource>).then(disposableInstance => workerExecutor(disposableInstance, ct));
 			} else {
 				return workerExecutor(disposableObject, ct);
 			}
@@ -40,7 +44,7 @@ export function using<TDisposable extends Disposable, TInitable extends Initable
 
 		if (typeof disposable === "function") {
 			// tslint:disable-next-line: max-line-length
-			const disposableInitializerFunction: (myCt: CancellationToken) => TInitable | TDisposable | Promise<TInitable | TDisposable> | Task<TInitable | TDisposable> = disposable;
+			const disposableInitializerFunction: using.ResourceInitializer<TResource> = disposable;
 			const realDisposable = disposableInitializerFunction(ct);
 			return workerExecutorFacade(realDisposable);
 		} else {

@@ -112,7 +112,7 @@ describe("using tests", function () {
 			assert.isTrue(executed);
 			assert.isString(expectedErrorMessage);
 			assert.equal(expectedErrorMessage,
-				"Dispose method raised an error. This is unexpected behaviour due dispose() should be exception safe.");
+				"Dispose method raised an error. This is unexpected behaviour due dispose() should be exception safe. The error was bypassed.");
 			assert.instanceOf(expectedErrorObj, Error);
 			assert.equal(expectedErrorObj.message, "Expected abnormal error");
 		} finally {
