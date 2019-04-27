@@ -9,19 +9,19 @@ export function using<TResource extends Initable | Disposable, TResult>(
 	cancellactonToken: CancellationToken,
 	// tslint:disable-next-line: max-line-length
 	disposable: using.ResourceInitializer<TResource>,
-	worker: (disposable: TResource, cancellactonToken: CancellationToken) => using.Result<TResult>
+	worker: (cancellactonToken: CancellationToken, disposable: TResource) => using.Result<TResult>
 ): Task<TResult> {
 	if (!disposable) { throw new Error("Wrong argument: disposable"); }
 	if (!worker) { throw new Error("Wrong argument: worker"); }
 
 	return TaskImpl.run(async (ct) => {
 		// tslint:disable-next-line: max-line-length
-		async function workerExecutor(disposableResource: TResource, workerExecutorCancellactonToken: CancellationToken): Promise<TResult> {
+		async function workerExecutor(workerExecutorCancellactonToken: CancellationToken, disposableResource: TResource): Promise<TResult> {
 			if ("init" in disposableResource) {
 				await (disposableResource as Initable).init();
 			}
 			try {
-				return await worker(disposableResource, workerExecutorCancellactonToken);
+				return await worker(workerExecutorCancellactonToken, disposableResource);
 			} finally {
 				try {
 					await disposableResource.dispose();
@@ -36,9 +36,9 @@ export function using<TResource extends Initable | Disposable, TResult>(
 		// tslint:disable-next-line: max-line-length
 		function workerExecutorFacade(disposableObject: TResource | Promise<TResource> | Task<TResource>): Promise<TResult> {
 			if (disposableObject instanceof Promise) {
-				return (disposableObject as Promise<TResource>).then(disposableInstance => workerExecutor(disposableInstance, ct));
+				return (disposableObject as Promise<TResource>).then(disposableInstance => workerExecutor(ct, disposableInstance));
 			} else {
-				return workerExecutor(disposableObject, ct);
+				return workerExecutor(ct, disposableObject);
 			}
 		}
 
