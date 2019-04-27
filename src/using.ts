@@ -6,10 +6,10 @@ export namespace using {
 	export type Result<T> = T | Promise<T> | Task<T>;
 }
 export function using<TResource extends Initable | Disposable, TResult>(
+	cancellactonToken: CancellationToken,
 	// tslint:disable-next-line: max-line-length
 	disposable: using.ResourceInitializer<TResource>,
-	worker: (disposable: TResource, cancellactonToken: CancellationToken) => using.Result<TResult>,
-	cancellactonToken?: CancellationToken
+	worker: (disposable: TResource, cancellactonToken: CancellationToken) => using.Result<TResult>
 ): Task<TResult> {
 	if (!disposable) { throw new Error("Wrong argument: disposable"); }
 	if (!worker) { throw new Error("Wrong argument: worker"); }

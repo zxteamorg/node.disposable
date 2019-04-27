@@ -1,5 +1,5 @@
 import { assert } from "chai";
-import { Task, CancelledError } from "ptask.js";
+import { Task, CancelledError, DUMMY_CANCELLATION_TOKEN } from "ptask.js";
 
 import { Disposable, using, Initable } from "../src";
 
@@ -40,7 +40,7 @@ describe("using tests", function () {
 	it("Should pass Promise result to worker", async function () {
 		const disposable = new TestDisposable();
 		let executed = false;
-		await using(Promise.resolve(disposable), (instance) => {
+		await using(DUMMY_CANCELLATION_TOKEN, Promise.resolve(disposable), (instance) => {
 			executed = true;
 			assert.strictEqual(disposable, instance);
 		});
@@ -51,7 +51,7 @@ describe("using tests", function () {
 	it("Should pass Task result to worker", async function () {
 		const disposable = new TestDisposable();
 		let executed = false;
-		await using(Task.resolve(disposable), (instance) => {
+		await using(DUMMY_CANCELLATION_TOKEN, Task.resolve(disposable), (instance) => {
 			executed = true;
 			assert.strictEqual(disposable, instance);
 		});
@@ -62,7 +62,7 @@ describe("using tests", function () {
 	it("Should pass factory result to worker (result is instance of Disposable)", async function () {
 		let disposable: any;
 		let executed = false;
-		await using(() => (disposable = new TestDisposable()), (instance) => {
+		await using(DUMMY_CANCELLATION_TOKEN, () => (disposable = new TestDisposable()), (instance) => {
 			executed = true;
 			assert.strictEqual(disposable, instance);
 		});
@@ -73,7 +73,7 @@ describe("using tests", function () {
 	it("Should pass factory result to worker (result is Promise<Disposable>)", async function () {
 		let disposable: any;
 		let executed = false;
-		await using(() => Promise.resolve(disposable = new TestDisposable()), (instance) => {
+		await using(DUMMY_CANCELLATION_TOKEN, () => Promise.resolve(disposable = new TestDisposable()), (instance) => {
 			executed = true;
 			assert.strictEqual(disposable, instance);
 		});
@@ -84,7 +84,7 @@ describe("using tests", function () {
 	it("Should pass factory result to worker (result is Task<Disposable>)", async function () {
 		let disposable: any;
 		let executed = false;
-		await using(() => Task.resolve(disposable = new TestDisposable()), (instance) => {
+		await using(DUMMY_CANCELLATION_TOKEN, () => Task.resolve(disposable = new TestDisposable()), (instance) => {
 			executed = true;
 			assert.strictEqual(disposable, instance);
 		});
@@ -106,9 +106,12 @@ describe("using tests", function () {
 					expectedErrorObj = err;
 				}
 			};
-			await using(() => ({ dispose: () => Task.run(() => { throw new Error("Expected abnormal error"); }) }), (instance) => {
-				executed = true;
-			});
+			await using(
+				DUMMY_CANCELLATION_TOKEN,
+				() => ({ dispose: () => Task.run(() => { throw new Error("Expected abnormal error"); }) }),
+				(instance) => {
+					executed = true;
+				});
 			assert.isTrue(executed);
 			assert.isString(expectedErrorMessage);
 			assert.equal(expectedErrorMessage,
@@ -123,7 +126,7 @@ describe("using tests", function () {
 		let executed = false;
 		let expectedError;
 		try {
-			await using(null as any, (instance) => {
+			await using(DUMMY_CANCELLATION_TOKEN, null as any, (instance) => {
 				//
 			});
 		} catch (e) {
@@ -137,7 +140,7 @@ describe("using tests", function () {
 		let executed = false;
 		let expectedError;
 		try {
-			await using(Promise.resolve(new TestDisposable()), null as any);
+			await using(DUMMY_CANCELLATION_TOKEN, Promise.resolve(new TestDisposable()), null as any);
 		} catch (e) {
 			expectedError = e;
 		}
@@ -149,7 +152,7 @@ describe("using tests", function () {
 		const disposable = new TestDisposable();
 		let executed = false; let expectedError;
 		try {
-			await using(Promise.resolve(disposable), (instance) => {
+			await using(DUMMY_CANCELLATION_TOKEN, Promise.resolve(disposable), (instance) => {
 				executed = true;
 				throw new Error("Test ERROR");
 			});
@@ -166,7 +169,7 @@ describe("using tests", function () {
 		const disposable = new TestDisposable();
 		let executed = false; let expectedError;
 		try {
-			await using(Promise.resolve(disposable), (instance) => {
+			await using(DUMMY_CANCELLATION_TOKEN, Promise.resolve(disposable), (instance) => {
 				executed = true;
 				return Promise.reject(new Error("Test ERROR"));
 			});
@@ -182,7 +185,7 @@ describe("using tests", function () {
 	it("using test onDispose(): Promise<void>", async function () {
 		const defer = Deferred.create<number>();
 		let usingPromiseResolved = false;
-		const usingPromise = using(() => (new TestDisposable()), (instance) => defer.promise)
+		const usingPromise = using(DUMMY_CANCELLATION_TOKEN, () => (new TestDisposable()), (instance) => defer.promise)
 			.then((v) => { usingPromiseResolved = true; return v; });
 
 		assert.isFalse(usingPromiseResolved);
@@ -206,14 +209,14 @@ describe("using tests", function () {
 		let err;
 		try {
 			await using(
+				token,
 				(cancellationToken) => {
 					cancellationToken.throwIfCancellationRequested();
 					return disposable;
 				},
 				(instance, cancellationToken) => {
 					// Do nothing
-				},
-				token
+				}
 			);
 		} catch (e) {
 			err = e;
@@ -236,6 +239,7 @@ describe("using tests", function () {
 		let err;
 		try {
 			await using(
+				token,
 				(cancellationToken) => {
 					cts.cancel();
 					return disposable;
@@ -243,8 +247,7 @@ describe("using tests", function () {
 				(instance, cancellationToken) => {
 					cancellationToken.throwIfCancellationRequested();
 					// Do nothing
-				},
-				token
+				}
 			);
 		} catch (e) {
 			err = e;
@@ -257,7 +260,7 @@ describe("using tests", function () {
 	it("Should call init() for Initable", async function () {
 		const initable = new TestInitable();
 		let executedAfterInit = false;
-		await using(Promise.resolve(initable), (instance) => {
+		await using(DUMMY_CANCELLATION_TOKEN, Promise.resolve(initable), (instance) => {
 			executedAfterInit = initable.initialized;
 			assert.strictEqual(initable, instance);
 		});

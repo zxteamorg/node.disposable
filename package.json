@@ -1,6 +1,6 @@
 {
 	"name": "@zxteam/disposable",
-	"version": "3.2.4",
+	"version": "3.2.5",
 	"description": "Implementation of Disposable and Initable interfaces",
 	"author": {
 		"name": "Maxim Anurin",
