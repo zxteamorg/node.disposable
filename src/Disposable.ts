@@ -1,34 +1,41 @@
-import { Disposable as DisposableLike, Task } from "@zxteam/contract";
-import { Task as TaskImpl } from "ptask.js";
+import * as zxteam from "@zxteam/contract";
+import { Task } from "@zxteam/task";
 
-export abstract class Disposable implements DisposableLike {
+export abstract class Disposable implements zxteam.Disposable {
 	private _disposed?: boolean;
-	private _disposingPromise?: Task;
+	private _disposingTask?: zxteam.Task;
 
 	public get disposed(): boolean { return this._disposed === true; }
-	public get disposing(): boolean { return this._disposingPromise !== undefined; }
+	public get disposing(): boolean { return this._disposingTask !== undefined; }
 
-	public dispose(): Task {
+	public dispose(): zxteam.Task {
 		if (!this._disposed) {
-			if (this._disposingPromise === undefined) {
+			if (this._disposingTask === undefined) {
 				const onDisposeResult = this.onDispose();
-				if (typeof (onDisposeResult) === "object" && onDisposeResult instanceof Promise) {
-					this._disposingPromise = TaskImpl.run(async () => {
-						await onDisposeResult;
-						this._disposed = true;
-						delete this._disposingPromise;
-					});
+				if (typeof (onDisposeResult) === "object") {
+					if (onDisposeResult instanceof Promise) {
+						this._disposingTask = Task.run(async () => {
+							await onDisposeResult;
+							delete this._disposingTask;
+							this._disposed = true;
+						});
+					} else {
+						this._disposingTask = onDisposeResult.continue(() => {
+							delete this._disposingTask;
+							this._disposed = true;
+						});
+					}
 				} else {
 					this._disposed = true;
-					return TaskImpl.run(() => Promise.resolve());
+					return Task.resolve();
 				}
 			}
-			return this._disposingPromise;
+			return this._disposingTask;
 		}
-		return TaskImpl.run(() => Promise.resolve());
+		return Task.resolve();
 	}
 
-	protected abstract onDispose(): void | Promise<void> | Task;
+	protected abstract onDispose(): void | Promise<void> | zxteam.Task;
 
 	protected verifyNotDisposed() {
 		if (this.disposed || this.disposing) {

@@ -1,6 +1,7 @@
+import * as zxteam from "@zxteam/contract";
+import { Task } from "@zxteam/task";
 import { assert } from "chai";
 import { Initable } from "../src";
-import { Task } from "ptask.js";
 
 interface Deferred<T = any> {
 	resolve: (value?: T) => void;
@@ -148,7 +149,7 @@ describe("Initable tests", function () {
 		onDisposePromise = defer.promise;
 		try {
 			let disposablePromiseResolved = false;
-			const disposablePromise = disposable.dispose().then(() => { disposablePromiseResolved = true; });
+			const disposablePromise = disposable.dispose().promise.then(() => { disposablePromiseResolved = true; });
 
 			assert.isFalse(disposablePromiseResolved);
 			assert.throw(() => disposable.verifyInitializedAndNotDisposed());
@@ -166,7 +167,7 @@ describe("Initable tests", function () {
 			assert.isTrue(disposable.disposing);
 
 			let secondDisposablePromiseResolved = false;
-			disposable.dispose().then(() => { secondDisposablePromiseResolved = true; });
+			disposable.dispose().promise.then(() => { secondDisposablePromiseResolved = true; });
 
 			assert.isFalse(secondDisposablePromiseResolved);
 
@@ -199,7 +200,7 @@ describe("Initable tests", function () {
 			assert.isFalse(disposable.disposing);
 
 			let thirdDisposablePromiseResolved = false;
-			disposable.dispose().then(() => { thirdDisposablePromiseResolved = true; });
+			disposable.dispose().promise.then(() => { thirdDisposablePromiseResolved = true; });
 			assert.isFalse(thirdDisposablePromiseResolved);
 			await nextTick();
 			assert.isTrue(thirdDisposablePromiseResolved);
@@ -263,8 +264,8 @@ describe("Initable tests", function () {
 		try {
 			let initablePromiseResolved = false;
 			let disposablePromiseResolved = false;
-			const initablePromise = disposable.init().then(() => { initablePromiseResolved = true; });
-			const disposablePromise = disposable.dispose().then(() => { disposablePromiseResolved = true; });
+			const initablePromise = disposable.init().promise.then(() => { initablePromiseResolved = true; });
+			const disposablePromise = disposable.dispose().promise.then(() => { disposablePromiseResolved = true; });
 
 			assert.isFalse(initablePromiseResolved);
 			assert.isFalse(disposablePromiseResolved);
@@ -282,7 +283,7 @@ describe("Initable tests", function () {
 			assert.isTrue(disposable.disposing);
 
 			let secondDisposablePromiseResolved = false;
-			disposable.dispose().then(() => { secondDisposablePromiseResolved = true; });
+			disposable.dispose().promise.then(() => { secondDisposablePromiseResolved = true; });
 
 			assert.isFalse(secondDisposablePromiseResolved);
 
@@ -311,7 +312,7 @@ describe("Initable tests", function () {
 			assert.isFalse(disposable.disposing);
 
 			let thirdDisposablePromiseResolved = false;
-			disposable.dispose().then(() => { thirdDisposablePromiseResolved = true; });
+			disposable.dispose().promise.then(() => { thirdDisposablePromiseResolved = true; });
 			assert.isFalse(thirdDisposablePromiseResolved);
 			await nextTick();
 			assert.isTrue(thirdDisposablePromiseResolved);
@@ -383,5 +384,55 @@ describe("Initable tests", function () {
 		assert.isTrue(initPromise2.isSuccessed);
 		await initPromise2;
 		await disposable.dispose();
+	});
+
+	it("Should execute and wait for initable and disposable tasks", async function () {
+		let onInitTaskCalled = false;
+		let onDisposeTaskCalled = false;
+
+		const onInitTask: zxteam.Task = Task.create(() => {
+			onInitTaskCalled = true;
+		});
+		const onDisposeTask: zxteam.Task = Task.create(() => {
+			onDisposeTaskCalled = true;
+		});
+
+		class MyInitable extends Initable {
+			protected onInit(): zxteam.Task<void> { return onInitTask; }
+			protected onDispose(): zxteam.Task<void> { return onDisposeTask; }
+		}
+
+		const initable = new MyInitable();
+
+		await initable.init();
+		assert.isTrue(onInitTaskCalled, "init() should execute init task");
+
+		await initable.dispose();
+		assert.isTrue(onDisposeTaskCalled, "dispose() should execute dispose task");
+	});
+
+	it("Should execute and wait for initable and disposable tasks if called both init() + dispose()", async function () {
+		let onInitTaskCalled = false;
+		let onDisposeTaskCalled = false;
+
+		const onInitTask: zxteam.Task = Task.create(() => {
+			onInitTaskCalled = true;
+		});
+		const onDisposeTask: zxteam.Task = Task.create(() => {
+			onDisposeTaskCalled = true;
+		});
+
+		class MyInitable extends Initable {
+			protected onInit(): zxteam.Task<void> { return onInitTask; }
+			protected onDispose(): zxteam.Task<void> { return onDisposeTask; }
+		}
+
+		const initable = new MyInitable();
+
+		initable.init();
+		await initable.dispose();
+
+		assert.isTrue(onInitTaskCalled, "init() should execute init task");
+		assert.isTrue(onDisposeTaskCalled, "dispose() should execute dispose task");
 	});
 });

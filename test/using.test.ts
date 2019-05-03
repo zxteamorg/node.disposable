@@ -1,5 +1,5 @@
 import { assert } from "chai";
-import { Task, CancelledError, DUMMY_CANCELLATION_TOKEN } from "ptask.js";
+import { Task, CancelledError, DUMMY_CANCELLATION_TOKEN } from "@zxteam/task";
 
 import { Disposable, using, Initable } from "../src";
 
@@ -87,6 +87,21 @@ describe("using tests", function () {
 		await using(DUMMY_CANCELLATION_TOKEN, () => Task.resolve(disposable = new TestDisposable()), (ct, instance) => {
 			executed = true;
 			assert.strictEqual(disposable, instance);
+		});
+		assert.isTrue(executed);
+		assert.isTrue(disposable.disposed);
+		assert.isFalse(disposable.disposing);
+	});
+	it("Should handle and execure worker's Task", async function () {
+		let disposable: any;
+		let executed = false;
+		await using(DUMMY_CANCELLATION_TOKEN, () => Task.resolve(disposable = new TestDisposable()), (ct, instance) => {
+			// Create new NON-Started task
+			return Task.create(() => {
+				executed = true;
+				assert.strictEqual(disposable, instance);
+			});
+
 		});
 		assert.isTrue(executed);
 		assert.isTrue(disposable.disposed);
@@ -185,7 +200,7 @@ describe("using tests", function () {
 	it("using test onDispose(): Promise<void>", async function () {
 		const defer = Deferred.create<number>();
 		let usingPromiseResolved = false;
-		const usingPromise = using(DUMMY_CANCELLATION_TOKEN, () => (new TestDisposable()), (ct, instance) => defer.promise)
+		const usingPromise = using(DUMMY_CANCELLATION_TOKEN, () => (new TestDisposable()), (ct, instance) => defer.promise).promise
 			.then((v) => { usingPromiseResolved = true; return v; });
 
 		assert.isFalse(usingPromiseResolved);

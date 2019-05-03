@@ -1,27 +1,35 @@
-import { Disposable, Initable, Task, CancellationToken } from "@zxteam/contract";
-import { Task as TaskImpl } from "ptask.js";
+import * as zxteam from "@zxteam/contract";
+import { Task } from "@zxteam/task";
 
 export namespace using {
-	export type ResourceInitializer<T> = ((cancellactonToken: CancellationToken) => T | Promise<T> | Task<T>) | Promise<T> | Task<T>;
-	export type Result<T> = T | Promise<T> | Task<T>;
+	// tslint:disable-next-line: max-line-length
+	export type ResourceInitializer<T> = ((cancellactonToken: zxteam.CancellationToken) => T | Promise<T> | zxteam.Task<T>) | Promise<T> | zxteam.Task<T>;
+	export type Result<T> = T | Promise<T> | zxteam.Task<T>;
 }
-export function using<TResource extends Initable | Disposable, TResult>(
-	cancellactonToken: CancellationToken,
+export function using<TResource extends zxteam.Initable | zxteam.Disposable, TResult>(
+	cancellactonToken: zxteam.CancellationToken,
 	// tslint:disable-next-line: max-line-length
 	disposable: using.ResourceInitializer<TResource>,
-	worker: (cancellactonToken: CancellationToken, disposable: TResource) => using.Result<TResult>
-): Task<TResult> {
+	worker: (cancellactonToken: zxteam.CancellationToken, disposable: TResource) => using.Result<TResult>
+): zxteam.Task<TResult> {
 	if (!disposable) { throw new Error("Wrong argument: disposable"); }
 	if (!worker) { throw new Error("Wrong argument: worker"); }
 
-	return TaskImpl.run(async (ct) => {
+	return Task.run(async (ct) => {
 		// tslint:disable-next-line: max-line-length
-		async function workerExecutor(workerExecutorCancellactonToken: CancellationToken, disposableResource: TResource): Promise<TResult> {
+		async function workerExecutor(workerExecutorCancellactonToken: zxteam.CancellationToken, disposableResource: TResource): Promise<TResult> {
 			if ("init" in disposableResource) {
-				await (disposableResource as Initable).init();
+				await (disposableResource as zxteam.Initable).init();
 			}
 			try {
-				return await worker(workerExecutorCancellactonToken, disposableResource);
+				const workerResult = worker(workerExecutorCancellactonToken, disposableResource);
+				if (workerResult instanceof Promise) {
+					return workerResult;
+				} if (typeof workerResult === "object" && "promise" in workerResult) {
+					return workerResult.promise;
+				} else {
+					return workerResult;
+				}
 			} finally {
 				try {
 					await disposableResource.dispose();
@@ -34,9 +42,11 @@ export function using<TResource extends Initable | Disposable, TResult>(
 		}
 
 		// tslint:disable-next-line: max-line-length
-		function workerExecutorFacade(disposableObject: TResource | Promise<TResource> | Task<TResource>): Promise<TResult> {
+		function workerExecutorFacade(disposableObject: TResource | Promise<TResource> | zxteam.Task<TResource>): Promise<TResult> {
 			if (disposableObject instanceof Promise) {
 				return (disposableObject as Promise<TResource>).then(disposableInstance => workerExecutor(ct, disposableInstance));
+			} else if (typeof disposableObject === "object" && "promise" in disposableObject) {
+				return disposableObject.promise.then(disposableInstance => workerExecutor(ct, disposableInstance));
 			} else {
 				return workerExecutor(ct, disposableObject);
 			}
