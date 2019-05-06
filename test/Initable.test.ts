@@ -386,6 +386,48 @@ describe("Initable tests", function () {
 		await disposable.dispose();
 	});
 
+	it("Should throw error from init()", async function () {
+		class MyInitable extends Initable {
+			protected onInit(): zxteam.Task<void> { return Task.reject(new Error("test error")); }
+			protected onDispose(): zxteam.Task<void> { return Task.resolve(); }
+		}
+
+		const initable = new MyInitable();
+
+		let expectedError: Error | null = null;
+		try {
+			await initable.init();
+		} catch (e) {
+			expectedError = e;
+		}
+
+		assert.isNotNull(expectedError);
+		assert.instanceOf(expectedError, Error);
+		assert.equal((expectedError as Error).message, "test error");
+	});
+
+	it("Should throw error from dispose()", async function () {
+		class MyInitable extends Initable {
+			protected onInit(): zxteam.Task<void> { return Task.resolve(); }
+			protected onDispose(): zxteam.Task<void> { return Task.reject(new Error("test error")); }
+		}
+
+		const initable = new MyInitable();
+
+		await initable.init();
+
+		let expectedError: Error | null = null;
+		try {
+			await initable.dispose();
+		} catch (e) {
+			expectedError = e;
+		}
+
+		assert.isNotNull(expectedError);
+		assert.instanceOf(expectedError, Error);
+		assert.equal((expectedError as Error).message, "test error");
+	});
+
 	it("Should execute and wait for initable and disposable tasks", async function () {
 		let onInitTaskCalled = false;
 		let onDisposeTaskCalled = false;

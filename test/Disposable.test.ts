@@ -145,4 +145,23 @@ describe("Disposable tests", function () {
 		await disposable.dispose();
 		assert.isTrue(onDisposeTaskCalled, "dispose() should execute dispose task");
 	});
+
+	it("Should throw error from dispose()", async function () {
+		class MyDisposable extends Disposable {
+			protected onDispose(): zxteam.Task<void> { return Task.reject(new Error("test error")); }
+		}
+
+		const disposable = new MyDisposable();
+
+		let expectedError: Error | null = null;
+		try {
+			await disposable.dispose();
+		} catch (e) {
+			expectedError = e;
+		}
+
+		assert.isNotNull(expectedError);
+		assert.instanceOf(expectedError, Error);
+		assert.equal((expectedError as Error).message, "test error");
+	});
 });

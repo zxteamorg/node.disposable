@@ -15,13 +15,17 @@ export abstract class Disposable implements zxteam.Disposable {
 				if (typeof (onDisposeResult) === "object") {
 					if (onDisposeResult instanceof Promise) {
 						this._disposingTask = Task.run(async () => {
-							await onDisposeResult;
-							delete this._disposingTask;
+							try {
+								await onDisposeResult;
+							} finally {
+								delete this._disposingTask;
+							}
 							this._disposed = true;
 						});
 					} else {
-						this._disposingTask = onDisposeResult.continue(() => {
+						this._disposingTask = onDisposeResult.continue((prevTask) => {
 							delete this._disposingTask;
+							if (prevTask.isSuccessed === false) { throw prevTask.error; }
 							this._disposed = true;
 						});
 					}

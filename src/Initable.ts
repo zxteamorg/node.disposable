@@ -20,14 +20,18 @@ export abstract class Initable implements zxteam.Initable {
 				if (typeof (onInitializeResult) === "object") {
 					if (onInitializeResult instanceof Promise) {
 						this._initializingTask = Task.run(async () => {
-							await onInitializeResult;
-							delete this._initializingTask;
+							try {
+								await onInitializeResult;
+							} finally {
+								delete this._initializingTask;
+							}
 							this._initialized = true;
 							return this;
 						});
 					} else {
-						this._initializingTask = onInitializeResult.continue(() => {
+						this._initializingTask = onInitializeResult.continue((prevTask) => {
 							delete this._initializingTask;
+							if (prevTask.isSuccessed === false) { throw prevTask.error; }
 							this._initialized = true;
 							return this;
 						});
@@ -53,13 +57,17 @@ export abstract class Initable implements zxteam.Initable {
 						if (typeof (onDisposeResult) === "object") {
 							if (onDisposeResult instanceof Promise) {
 								this._disposingTask = Task.run(async () => {
-									await onDisposeResult;
-									delete this._disposingTask;
+									try {
+										await onDisposeResult;
+									} finally {
+										delete this._disposingTask;
+									}
 									this._disposed = true;
 								});
 							} else {
-								this._disposingTask = onDisposeResult.continue(() => {
+								this._disposingTask = onDisposeResult.continue((prevTask) => {
 									delete this._disposingTask;
+									if (prevTask.isSuccessed === false) { throw prevTask.error; }
 									this._disposed = true;
 								});
 							}
@@ -73,13 +81,17 @@ export abstract class Initable implements zxteam.Initable {
 					if (typeof (onDisposeResult) === "object") {
 						if (onDisposeResult instanceof Promise) {
 							this._disposingTask = Task.run(async () => {
-								await onDisposeResult;
+								try {
+									await onDisposeResult;
+								} finally {
+									delete this._disposingTask;
+								}
 								this._disposed = true;
-								delete this._disposingTask;
 							});
 						} else {
-							this._disposingTask = onDisposeResult.continue(() => {
+							this._disposingTask = onDisposeResult.continue((prevTask) => {
 								delete this._disposingTask;
+								if (prevTask.isSuccessed === false) { throw prevTask.error; }
 								this._disposed = true;
 							});
 						}
