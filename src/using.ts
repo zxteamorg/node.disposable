@@ -24,9 +24,9 @@ export function using<TResource extends zxteam.Initable | zxteam.Disposable, TRe
 			try {
 				const workerResult = worker(workerExecutorCancellactonToken, disposableResource);
 				if (workerResult instanceof Promise) {
-					return workerResult;
+					return await workerResult;
 				} if (typeof workerResult === "object" && "promise" in workerResult) {
-					return workerResult.promise;
+					return await workerResult.promise;
 				} else {
 					return workerResult;
 				}

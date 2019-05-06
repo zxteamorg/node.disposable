@@ -24,8 +24,16 @@ function nextTick(): Promise<void> {
 
 describe("using tests", function () {
 	class TestDisposable extends Disposable {
+		private readonly _onDisposeCb: Function | null;
+		public constructor(onDisposeCb?: Function) {
+			super();
+			this._onDisposeCb = onDisposeCb || null;
+		}
+
 		protected onDispose(): void | Promise<void> | Task<void> {
-			//
+			if (this._onDisposeCb !== null) {
+				this._onDisposeCb();
+			}
 		}
 	}
 	class TestInitable extends Initable {
@@ -106,6 +114,49 @@ describe("using tests", function () {
 		assert.isTrue(executed);
 		assert.isTrue(disposable.disposed);
 		assert.isFalse(disposable.disposing);
+	});
+	it("Should wait for execute Promise-worker before call dispose()", async function () {
+		let disposable: any;
+		let executed = false;
+
+		const callSequence: Array<string> = [];
+		function disposeCallback() { callSequence.push("dispose"); }
+
+		await using(DUMMY_CANCELLATION_TOKEN, () => Task.resolve(disposable = new TestDisposable(disposeCallback)), async (ct, instance) => {
+			executed = true;
+			assert.strictEqual(disposable, instance);
+			await Task.sleep(25);
+			callSequence.push("worker");
+		});
+		assert.isTrue(executed);
+		assert.isTrue(disposable.disposed);
+		assert.isFalse(disposable.disposing);
+		assert.equal(callSequence.length, 2);
+		assert.equal(callSequence[0], "worker");
+		assert.equal(callSequence[1], "dispose");
+	});
+	it("Should wait for execute Task-worker before call dispose()", async function () {
+		let disposable: any;
+		let executed = false;
+
+		const callSequence: Array<string> = [];
+		function disposeCallback() { callSequence.push("dispose"); }
+
+		await using(DUMMY_CANCELLATION_TOKEN, () => Task.resolve(disposable = new TestDisposable(disposeCallback)), (ct, instance) => {
+			return Task.run(() => {
+				executed = true;
+				assert.strictEqual(disposable, instance);
+				return Task.sleep(25).continue(() => {
+					callSequence.push("worker");
+				});
+			});
+		});
+		assert.isTrue(executed);
+		assert.isTrue(disposable.disposed);
+		assert.isFalse(disposable.disposing);
+		assert.equal(callSequence.length, 2);
+		assert.equal(callSequence[0], "worker");
+		assert.equal(callSequence[1], "dispose");
 	});
 	it("Should NOT fail if dispose() raise an error", async function () {
 		const originalConsole = (global as any).console;

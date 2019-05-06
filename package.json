@@ -1,6 +1,6 @@
 {
 	"name": "@zxteam/disposable",
-	"version": "4.0.0",
+	"version": "4.0.1",
 	"description": "Implementation of Disposable and Initable interfaces",
 	"author": {
 		"name": "Maxim Anurin",
@@ -15,7 +15,7 @@
 	],
 	"license": "MIT",
 	"devDependencies": {
-		"@types/node": "^11.13.9",
+		"@types/node": "^11.13.10",
 		"@zxnode/build": "^0.0.33"
 	},
 	"dependencies": {
