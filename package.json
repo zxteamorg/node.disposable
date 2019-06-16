@@ -1,6 +1,6 @@
 {
 	"name": "@zxteam/disposable",
-	"version": "5.0.0",
+	"version": "5.0.1",
 	"description": "Implementation of Disposable and Initable interfaces",
 	"author": {
 		"name": "ZXTeam",
@@ -24,8 +24,8 @@
 		"@zxnode/build": "^0.0.34"
 	},
 	"dependencies": {
-		"@zxteam/contract": "^5.0.0",
-		"@zxteam/task": "^5.0.0"
+		"@zxteam/contract": "^5.0.1",
+		"@zxteam/task": "^5.0.1"
 	},
 	"engines": {
 		"node": ">=11"
