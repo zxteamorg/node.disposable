@@ -1,5 +1,4 @@
 import * as zxteam from "@zxteam/contract";
-import { Task } from "@zxteam/task";
 import { assert } from "chai";
 import { Disposable } from "../src";
 
@@ -50,7 +49,7 @@ describe("Disposable tests", function () {
 		onDisposePromise = defer.promise;
 		try {
 			let disposablePromiseResolved = false;
-			const disposablePromise = disposable.dispose().promise.then(() => { disposablePromiseResolved = true; });
+			const disposablePromise = disposable.dispose().then(() => { disposablePromiseResolved = true; });
 
 			assert.isFalse(disposablePromiseResolved);
 			assert.throw(() => disposable.verifyNotDisposed());
@@ -64,7 +63,7 @@ describe("Disposable tests", function () {
 			assert.isTrue(disposable.disposing);
 
 			let secondDisposablePromiseResolved = false;
-			disposable.dispose().promise.then(() => { secondDisposablePromiseResolved = true; });
+			disposable.dispose().then(() => { secondDisposablePromiseResolved = true; });
 
 			assert.isFalse(secondDisposablePromiseResolved);
 
@@ -92,7 +91,7 @@ describe("Disposable tests", function () {
 			assert.isFalse(disposable.disposing);
 
 			let thirdDisposablePromiseResolved = false;
-			disposable.dispose().promise.then(() => { thirdDisposablePromiseResolved = true; });
+			disposable.dispose().then(() => { thirdDisposablePromiseResolved = true; });
 			assert.isFalse(thirdDisposablePromiseResolved);
 			await nextTick();
 			assert.isTrue(thirdDisposablePromiseResolved);
@@ -130,25 +129,25 @@ describe("Disposable tests", function () {
 		assert.isFalse(disposable.disposing);
 	});
 
-	it("Should execute and wait for disposable task", async function () {
-		let onDisposeTaskCalled = false;
-		const onDisposeTask: zxteam.Task = Task.create(() => {
-			onDisposeTaskCalled = true;
-		});
+	// it("Should execute and wait for disposable task", async function () {
+	// 	let onDisposeTaskCalled = false;
+	// 	const onDisposeTask: zxteam.Task = Task.create(() => {
+	// 		onDisposeTaskCalled = true;
+	// 	});
 
-		class MyDisposable extends Disposable {
-			protected onDispose(): zxteam.Task<void> { return onDisposeTask; }
-		}
+	// 	class MyDisposable extends Disposable {
+	// 		protected onDispose(): Promise<void> { return onDisposeTask; }
+	// 	}
 
-		const disposable = new MyDisposable();
+	// 	const disposable = new MyDisposable();
 
-		await disposable.dispose();
-		assert.isTrue(onDisposeTaskCalled, "dispose() should execute dispose task");
-	});
+	// 	await disposable.dispose();
+	// 	assert.isTrue(onDisposeTaskCalled, "dispose() should execute dispose task");
+	// });
 
 	it("Should throw error from dispose()", async function () {
 		class MyDisposable extends Disposable {
-			protected onDispose(): zxteam.Task<void> { return Task.reject(new Error("test error")); }
+			protected onDispose(): Promise<void> { return Promise.reject(new Error("test error")); }
 		}
 
 		const disposable = new MyDisposable();

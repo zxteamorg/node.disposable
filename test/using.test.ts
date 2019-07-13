@@ -1,3 +1,4 @@
+import * as zxteam from "@zxteam/contract";
 import { assert } from "chai";
 import { Task, CancelledError, DUMMY_CANCELLATION_TOKEN } from "@zxteam/task";
 
@@ -30,17 +31,17 @@ describe("using tests", function () {
 			this._onDisposeCb = onDisposeCb || null;
 		}
 
-		protected onDispose(): void | Promise<void> | Task<void> {
+		protected onDispose(): void | Promise<void> {
 			if (this._onDisposeCb !== null) {
 				this._onDisposeCb();
 			}
 		}
 	}
 	class TestInitable extends Initable {
-		protected onInit(): void | Promise<void> | Task<void> {
+		protected onInit(): void | Promise<void> {
 			//
 		}
-		protected onDispose(): void | Promise<void> | Task<void> {
+		protected onDispose(): void | Promise<void> {
 			//
 		}
 	}
@@ -59,7 +60,7 @@ describe("using tests", function () {
 	it("Should pass Task result to worker", async function () {
 		const disposable = new TestDisposable();
 		let executed = false;
-		await using(DUMMY_CANCELLATION_TOKEN, Task.resolve(disposable), (ct, instance) => {
+		await using(DUMMY_CANCELLATION_TOKEN, Promise.resolve(disposable), (ct, instance) => {
 			executed = true;
 			assert.strictEqual(disposable, instance);
 		});
@@ -92,7 +93,7 @@ describe("using tests", function () {
 	it("Should pass factory result to worker (result is Task<Disposable>)", async function () {
 		let disposable: any;
 		let executed = false;
-		await using(DUMMY_CANCELLATION_TOKEN, () => Task.resolve(disposable = new TestDisposable()), (ct, instance) => {
+		await using(DUMMY_CANCELLATION_TOKEN, () => Promise.resolve(disposable = new TestDisposable()), (ct, instance) => {
 			executed = true;
 			assert.strictEqual(disposable, instance);
 		});
@@ -103,9 +104,9 @@ describe("using tests", function () {
 	it("Should handle and execure worker's Task", async function () {
 		let disposable: any;
 		let executed = false;
-		await using(DUMMY_CANCELLATION_TOKEN, () => Task.resolve(disposable = new TestDisposable()), (ct, instance) => {
+		await using(DUMMY_CANCELLATION_TOKEN, () => Promise.resolve(disposable = new TestDisposable()), (ct, instance) => {
 			// Create new NON-Started task
-			return Task.create(() => {
+			return Promise.resolve().then(() => {
 				executed = true;
 				assert.strictEqual(disposable, instance);
 			});
@@ -122,7 +123,7 @@ describe("using tests", function () {
 		const callSequence: Array<string> = [];
 		function disposeCallback() { callSequence.push("dispose"); }
 
-		await using(DUMMY_CANCELLATION_TOKEN, () => Task.resolve(disposable = new TestDisposable(disposeCallback)), async (ct, instance) => {
+		await using(DUMMY_CANCELLATION_TOKEN, () => Promise.resolve(disposable = new TestDisposable(disposeCallback)), async (ct, instance) => {
 			executed = true;
 			assert.strictEqual(disposable, instance);
 			await Task.sleep(25);
@@ -142,14 +143,14 @@ describe("using tests", function () {
 		const callSequence: Array<string> = [];
 		function disposeCallback() { callSequence.push("dispose"); }
 
-		await using(DUMMY_CANCELLATION_TOKEN, () => Task.resolve(disposable = new TestDisposable(disposeCallback)), (ct, instance) => {
+		await using(DUMMY_CANCELLATION_TOKEN, () => Promise.resolve(disposable = new TestDisposable(disposeCallback)), (ct, instance) => {
 			return Task.run(() => {
 				executed = true;
 				assert.strictEqual(disposable, instance);
 				return Task.sleep(25).continue(() => {
 					callSequence.push("worker");
 				});
-			});
+			}).promise;
 		});
 		assert.isTrue(executed);
 		assert.isTrue(disposable.disposed);
@@ -174,7 +175,7 @@ describe("using tests", function () {
 			};
 			await using(
 				DUMMY_CANCELLATION_TOKEN,
-				() => ({ dispose: () => Task.run(() => { throw new Error("Expected abnormal error"); }) }),
+				() => ({ dispose: () => Promise.resolve().then(() => { throw new Error("Expected abnormal error"); }) }),
 				(ct, instance) => {
 					executed = true;
 				});
@@ -251,7 +252,7 @@ describe("using tests", function () {
 	it("using test onDispose(): Promise<void>", async function () {
 		const defer = Deferred.create<number>();
 		let usingPromiseResolved = false;
-		const usingPromise = using(DUMMY_CANCELLATION_TOKEN, () => (new TestDisposable()), (ct, instance) => defer.promise).promise
+		const usingPromise = using(DUMMY_CANCELLATION_TOKEN, () => (new TestDisposable()), (ct, instance) => defer.promise)
 			.then((v) => { usingPromiseResolved = true; return v; });
 
 		assert.isFalse(usingPromiseResolved);

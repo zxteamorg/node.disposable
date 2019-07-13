@@ -1,6 +1,6 @@
 {
 	"name": "@zxteam/disposable",
-	"version": "5.0.2",
+	"version": "6.0.1",
 	"description": "Implementation of Disposable and Initable interfaces",
 	"author": {
 		"name": "ZXTeam",
@@ -20,12 +20,12 @@
 	],
 	"license": "MIT",
 	"devDependencies": {
-		"@types/node": "^11.13.14",
-		"@zxnode/build": "^0.0.34"
+		"@types/node": "^11.13.17",
+		"@zxnode/build": "^0.0.34",
+		"@zxteam/task": "^6.0.1"
 	},
 	"dependencies": {
-		"@zxteam/contract": "^5.0.1",
-		"@zxteam/task": "^5.0.1"
+		"@zxteam/contract": "^6.0.1"
 	},
 	"engines": {
 		"node": ">=11"
@@ -41,7 +41,7 @@
 	"homepage": "https://dev.zxteam.net/pub/node/disposable",
 	"scripts": {
 		"build": "zxbuild clean dist",
-		"test": "nyc --exclude submodules --exclude test --reporter=lcov --reporter=text --reporter=text-summary mocha \"test/**/*.test.js\" --recursive",
+		"test": "nyc --exclude submodules --exclude test --extension=\".ts\" --reporter=lcov --reporter=text --reporter=text-summary mocha \"test/**/*.test.js\" --recursive",
 		"test:only": "mocha --require source-map-support/register \"test/**/*.test.js\" --recursive"
 	},
 	"main": "./src/index.js",

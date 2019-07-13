@@ -1,18 +1,15 @@
 import * as zxteam from "@zxteam/contract";
-import { Task } from "@zxteam/task";
 
-export function safeDispose(disposable: any): zxteam.Task {
-	if (typeof disposable !== "object") { return Task.resolve(); }
-	if (!("dispose" in disposable)) { return Task.resolve(); }
-	if (typeof disposable.dispose !== "function") { return Task.resolve(); }
+export function safeDispose(disposable: any): Promise<void> {
+	if (typeof disposable !== "object") { return Promise.resolve(); }
+	if (!("dispose" in disposable)) { return Promise.resolve(); }
+	if (typeof disposable.dispose !== "function") { return Promise.resolve(); }
 
-	return Task.run(async () => {
+	return Promise.resolve().then(async () => {
 		try {
-			const disposeResult = disposable.dispose();
-			if ("promise" in disposeResult) {
-				if (disposeResult.promise instanceof Promise) {
-					await disposeResult.promise;
-				}
+			const disposeResult = (disposable as zxteam.Disposable).dispose();
+			if (disposeResult instanceof Promise) {
+				await disposeResult;
 			}
 		} catch (e) {
 			console.error(

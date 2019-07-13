@@ -1,114 +1,69 @@
 import * as zxteam from "@zxteam/contract";
-import { Task } from "@zxteam/task";
 
 export abstract class Initable implements zxteam.Initable {
 	private _initialized?: boolean;
-	private _initializingTask?: zxteam.Task<this>;
+	private _initializingPromise?: Promise<this>;
 	private _disposed?: boolean;
-	private _disposingTask?: zxteam.Task;
+	private _disposingPromise?: Promise<void>;
 
 	public get initialized(): boolean { return this._initialized === true; }
-	public get initializing(): boolean { return this._initializingTask !== undefined; }
+	public get initializing(): boolean { return this._initializingPromise !== undefined; }
 	public get disposed(): boolean { return this._disposed === true; }
-	public get disposing(): boolean { return this._disposingTask !== undefined; }
+	public get disposing(): boolean { return this._disposingPromise !== undefined; }
 
-	public init(): zxteam.Task<this> {
+	public init(cancellationToken: zxteam.CancellationToken): Promise<this> {
 		this.verifyNotDisposed();
 		if (!this._initialized) {
-			if (!this._initializingTask) {
-				const onInitializeResult = this.onInit();
-				if (typeof (onInitializeResult) === "object") {
-					if (onInitializeResult instanceof Promise) {
-						this._initializingTask = Task.run(async () => {
-							try {
-								await onInitializeResult;
-							} finally {
-								delete this._initializingTask;
-							}
+			if (this._initializingPromise === undefined) {
+				const onInitializeResult = this.onInit(cancellationToken);
+				if (onInitializeResult instanceof Promise) {
+					this._initializingPromise = onInitializeResult
+						.then(() => this)
+						.finally(() => {
+							delete this._initializingPromise;
 							this._initialized = true;
-							return this;
 						});
-					} else {
-						this._initializingTask = onInitializeResult.continue((prevTask) => {
-							delete this._initializingTask;
-							if (prevTask.isSuccessed === false) { throw prevTask.error; }
-							this._initialized = true;
-							return this;
-						});
-					}
 				} else {
 					this._initialized = true;
-					return Task.resolve(this);
+					return Promise.resolve(this);
 				}
 			}
-			return this._initializingTask;
+			return this._initializingPromise;
 		}
-		return Task.resolve(this);
+		return Promise.resolve(this);
 	}
 
-	public dispose(): zxteam.Task {
+	public dispose(): Promise<void> {
 		if (!this._disposed) {
-			if (!this._disposingTask) {
-				if (this._initializingTask) {
-					const initializingTask = this._initializingTask;
-					this._disposingTask = Task.run(async () => {
-						await initializingTask;
-						const onDisposeResult = this.onDispose();
-						if (typeof (onDisposeResult) === "object") {
-							if (onDisposeResult instanceof Promise) {
-								this._disposingTask = Task.run(async () => {
-									try {
-										await onDisposeResult;
-									} finally {
-										delete this._disposingTask;
-									}
-									this._disposed = true;
-								});
-							} else {
-								this._disposingTask = onDisposeResult.continue((prevTask) => {
-									delete this._disposingTask;
-									if (prevTask.isSuccessed === false) { throw prevTask.error; }
-									this._disposed = true;
-								});
-							}
-							await this._disposingTask;
-						}
-						this._disposed = true;
-						delete this._disposingTask;
-					});
+			if (this._disposingPromise === undefined) {
+				if (this._initializingPromise !== undefined) {
+					this._disposingPromise = this._initializingPromise
+						.then(async () => this.onDispose())
+						.finally(() => {
+							delete this._disposingPromise;
+							this._disposed = true;
+						});
 				} else {
 					const onDisposeResult = this.onDispose();
-					if (typeof (onDisposeResult) === "object") {
-						if (onDisposeResult instanceof Promise) {
-							this._disposingTask = Task.run(async () => {
-								try {
-									await onDisposeResult;
-								} finally {
-									delete this._disposingTask;
-								}
-								this._disposed = true;
-							});
-						} else {
-							this._disposingTask = onDisposeResult.continue((prevTask) => {
-								delete this._disposingTask;
-								if (prevTask.isSuccessed === false) { throw prevTask.error; }
-								this._disposed = true;
-							});
-						}
+					if (onDisposeResult instanceof Promise) {
+						this._disposingPromise = onDisposeResult.finally(() => {
+							delete this._disposingPromise;
+							this._disposed = true;
+						});
 					} else {
 						this._disposed = true;
-						return Task.resolve();
+						return Promise.resolve();
 					}
 				}
 			}
-			return this._disposingTask;
+			return this._disposingPromise;
 		}
-		return Task.resolve();
+		return Promise.resolve();
 	}
 
 
-	protected abstract onInit(): void | Promise<void> | zxteam.Task<void>;
-	protected abstract onDispose(): void | Promise<void> | zxteam.Task;
+	protected abstract onInit(cancellationToken: zxteam.CancellationToken): void | Promise<void>;
+	protected abstract onDispose(): void | Promise<void>;
 
 
 	protected verifyInitialized() {
