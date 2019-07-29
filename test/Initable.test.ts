@@ -1,5 +1,5 @@
 import * as zxteam from "@zxteam/contract";
-import { DUMMY_CANCELLATION_TOKEN } from "@zxteam/task";
+import { DUMMY_CANCELLATION_TOKEN } from "@zxteam/cancellation";
 import { assert } from "chai";
 import { Initable } from "../src";
 

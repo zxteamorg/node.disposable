@@ -1,6 +1,9 @@
 import * as zxteam from "@zxteam/contract";
+import { DUMMY_CANCELLATION_TOKEN, SimpleCancellationTokenSource } from "@zxteam/cancellation";
+import { CancelledError } from "@zxteam/errors";
+//import { Task, CancelledError } from "@zxteam/task";
+
 import { assert } from "chai";
-import { Task, CancelledError, DUMMY_CANCELLATION_TOKEN } from "@zxteam/task";
 
 import { Disposable, using, Initable } from "../src";
 
@@ -126,7 +129,7 @@ describe("using tests", function () {
 		await using(DUMMY_CANCELLATION_TOKEN, () => Promise.resolve(disposable = new TestDisposable(disposeCallback)), async (ct, instance) => {
 			executed = true;
 			assert.strictEqual(disposable, instance);
-			await Task.sleep(25);
+			await new Promise(r => setTimeout(r, 25));
 			callSequence.push("worker");
 		});
 		assert.isTrue(executed);
@@ -144,13 +147,12 @@ describe("using tests", function () {
 		function disposeCallback() { callSequence.push("dispose"); }
 
 		await using(DUMMY_CANCELLATION_TOKEN, () => Promise.resolve(disposable = new TestDisposable(disposeCallback)), (ct, instance) => {
-			return Task.run(() => {
+			return Promise.resolve().then(async () => {
 				executed = true;
 				assert.strictEqual(disposable, instance);
-				return Task.sleep(25).continue(() => {
-					callSequence.push("worker");
-				});
-			}).promise;
+				await new Promise(r => setTimeout(r, 25));
+				callSequence.push("worker");
+			});
 		});
 		assert.isTrue(executed);
 		assert.isTrue(disposable.disposed);
@@ -266,8 +268,8 @@ describe("using tests", function () {
 		assert.equal(result, 42);
 	});
 	it("Should be able to use CancellationToken on init phase", async function () {
-		const cts = Task.createCancellationTokenSource();
-		const token = cts.token;
+		const cts = new SimpleCancellationTokenSource();
+		const token: zxteam.CancellationToken = cts.token;
 
 
 		cts.cancel();
@@ -293,8 +295,8 @@ describe("using tests", function () {
 		assert.instanceOf(err, CancelledError);
 	});
 	it("Should be able to use CancellationToken on worker phase", async function () {
-		const cts = Task.createCancellationTokenSource();
-		const token = cts.token;
+		const cts = new SimpleCancellationTokenSource();
+		const token: zxteam.CancellationToken = cts.token;
 
 		const disposable: Disposable = new TestDisposable();
 

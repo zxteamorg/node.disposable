@@ -1,10 +1,10 @@
 {
 	"name": "@zxteam/disposable",
-	"version": "6.0.1",
+	"version": "6.0.7",
 	"description": "Implementation of Disposable and Initable interfaces",
 	"author": {
 		"name": "ZXTeam",
-		"email": "pub@project.zxteam.org",
+		"email": "pub@zxteam.org",
 		"url": "http://www.zxteam.org"
 	},
 	"contributors": [
@@ -20,12 +20,13 @@
 	],
 	"license": "MIT",
 	"devDependencies": {
-		"@types/node": "^11.13.17",
+		"@types/node": "^11.13.18",
 		"@zxnode/build": "^0.0.34",
-		"@zxteam/task": "^6.0.1"
+		"@zxteam/cancellation": "^6.0.7",
+		"@zxteam/errors": "^6.0.7"
 	},
 	"dependencies": {
-		"@zxteam/contract": "^6.0.1"
+		"@zxteam/contract": "^6.0.7"
 	},
 	"engines": {
 		"node": ">=11"
@@ -33,14 +34,14 @@
 	"keywords": [],
 	"repository": {
 		"type": "git",
-		"url": "ssh://git@dev.zxteam.net:22282/pub/node/disposable.git"
+		"url": "https://github.com/zxteamorg/node.disposable.git"
 	},
 	"bugs": {
-		"url": "https://dev.zxteam.net/pub/node/disposable/issues"
+		"url": "https://github.com/zxteamorg/node.disposable/issues"
 	},
-	"homepage": "https://dev.zxteam.net/pub/node/disposable",
+	"homepage": "https://github.com/zxteamorg/node.disposable",
 	"scripts": {
-		"build": "zxbuild clean dist",
+		"build": "zxbuild clean dist && cp README.md .dist/",
 		"test": "nyc --exclude submodules --exclude test --extension=\".ts\" --reporter=lcov --reporter=text --reporter=text-summary mocha \"test/**/*.test.js\" --recursive",
 		"test:only": "mocha --require source-map-support/register \"test/**/*.test.js\" --recursive"
 	},
