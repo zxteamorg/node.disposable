@@ -1,5 +1,5 @@
 import * as zxteam from "@zxteam/contract";
-import { DUMMY_CANCELLATION_TOKEN, SimpleCancellationTokenSource } from "@zxteam/cancellation";
+import { DUMMY_CANCELLATION_TOKEN, ManualCancellationTokenSource } from "@zxteam/cancellation";
 import { CancelledError } from "@zxteam/errors";
 //import { Task, CancelledError } from "@zxteam/task";
 
@@ -268,7 +268,7 @@ describe("using tests", function () {
 		assert.equal(result, 42);
 	});
 	it("Should be able to use CancellationToken on init phase", async function () {
-		const cts = new SimpleCancellationTokenSource();
+		const cts = new ManualCancellationTokenSource();
 		const token: zxteam.CancellationToken = cts.token;
 
 
@@ -295,7 +295,7 @@ describe("using tests", function () {
 		assert.instanceOf(err, CancelledError);
 	});
 	it("Should be able to use CancellationToken on worker phase", async function () {
-		const cts = new SimpleCancellationTokenSource();
+		const cts = new ManualCancellationTokenSource();
 		const token: zxteam.CancellationToken = cts.token;
 
 		const disposable: Disposable = new TestDisposable();

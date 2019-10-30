@@ -1,6 +1,8 @@
-import * as zxteam from "@zxteam/contract";
+import { CancellationToken, Disposable as IDisposable } from "@zxteam/contract";
 
-export abstract class Disposable implements zxteam.Disposable {
+import { safeDispose } from "./safeDispose";
+
+export abstract class Disposable implements IDisposable {
 	private _disposed?: boolean;
 	private _disposingPromise?: Promise<void>;
 
@@ -24,6 +26,12 @@ export abstract class Disposable implements zxteam.Disposable {
 			return this._disposingPromise;
 		}
 		return Promise.resolve();
+	}
+
+	public static async disposeAll(...instances: ReadonlyArray<IDisposable>): Promise<void> {
+		for (const instance of instances) {
+			await safeDispose(instance);
+		}
 	}
 
 	protected abstract onDispose(): void | Promise<void>;

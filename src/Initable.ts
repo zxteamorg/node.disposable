@@ -1,6 +1,8 @@
-import * as zxteam from "@zxteam/contract";
+import { CancellationToken, Initable as IInitable } from "@zxteam/contract";
 
-export abstract class Initable implements zxteam.Initable {
+import { safeDispose } from "./safeDispose";
+
+export abstract class Initable implements IInitable {
 	private _initialized?: boolean;
 	private _initializingPromise?: Promise<this>;
 	private _disposed?: boolean;
@@ -11,7 +13,7 @@ export abstract class Initable implements zxteam.Initable {
 	public get disposed(): boolean { return this._disposed === true; }
 	public get disposing(): boolean { return this._disposingPromise !== undefined; }
 
-	public init(cancellationToken: zxteam.CancellationToken): Promise<this> {
+	public init(cancellationToken: CancellationToken): Promise<this> {
 		this.verifyNotDisposed();
 		if (!this._initialized) {
 			if (this._initializingPromise === undefined) {
@@ -61,8 +63,22 @@ export abstract class Initable implements zxteam.Initable {
 		return Promise.resolve();
 	}
 
+	public static async initAll(cancellationToken: CancellationToken, ...instances: ReadonlyArray<IInitable>): Promise<void> {
+		const intializedInstances: Array<IInitable> = [];
+		try {
+			for (const instance of instances) {
+				await instance.init(cancellationToken);
+				intializedInstances.push(instance);
+			}
+		} catch (e) {
+			for (const intializedInstance of intializedInstances.reverse()) {
+				await safeDispose(intializedInstance);
+			}
+			throw e;
+		}
+	}
 
-	protected abstract onInit(cancellationToken: zxteam.CancellationToken): void | Promise<void>;
+	protected abstract onInit(cancellationToken: CancellationToken): void | Promise<void>;
 	protected abstract onDispose(): void | Promise<void>;
 
 
