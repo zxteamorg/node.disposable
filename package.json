@@ -1,6 +1,6 @@
 {
 	"name": "@zxteam/disposable",
-	"version": "6.0.23",
+	"version": "6.0.40",
 	"description": "Implementation of Disposable and Initable interfaces",
 	"author": {
 		"name": "ZXTeam",
@@ -20,13 +20,13 @@
 	],
 	"license": "MIT",
 	"devDependencies": {
-		"@types/node": "^11.13.22",
+		"@types/node": "^11.15.3",
 		"@zxnode/build": "^0.0.34",
-		"@zxteam/cancellation": "^6.0.23",
-		"@zxteam/errors": "^6.0.21"
+		"@zxteam/cancellation": "^6.0.40",
+		"@zxteam/errors": "^6.0.40"
 	},
 	"dependencies": {
-		"@zxteam/contract": "^6.0.23"
+		"@zxteam/contract": "^6.0.40"
 	},
 	"engines": {
 		"node": ">=11"
