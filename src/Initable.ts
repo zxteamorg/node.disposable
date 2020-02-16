@@ -1,8 +1,8 @@
-import { CancellationToken, Initable as IInitable } from "@zxteam/contract";
+import { CancellationToken, Initable as InitableLike } from "@zxteam/contract";
 
 import { safeDispose } from "./safeDispose";
 
-export abstract class Initable implements IInitable {
+export abstract class Initable implements InitableLike {
 	private _initialized?: boolean;
 	private _initializingPromise?: Promise<this>;
 	private _disposed?: boolean;
@@ -36,7 +36,7 @@ export abstract class Initable implements IInitable {
 	}
 
 	public dispose(): Promise<void> {
-		if (!this._disposed) {
+		if (this._disposed !== true) {
 			if (this._disposingPromise === undefined) {
 				if (this._initializingPromise !== undefined) {
 					this._disposingPromise = this._initializingPromise
@@ -63,8 +63,8 @@ export abstract class Initable implements IInitable {
 		return Promise.resolve();
 	}
 
-	public static async initAll(cancellationToken: CancellationToken, ...instances: ReadonlyArray<IInitable>): Promise<void> {
-		const intializedInstances: Array<IInitable> = [];
+	public static async initAll(cancellationToken: CancellationToken, ...instances: ReadonlyArray<InitableLike>): Promise<void> {
+		const intializedInstances: Array<InitableLike> = [];
 		try {
 			for (const instance of instances) {
 				await instance.init(cancellationToken);

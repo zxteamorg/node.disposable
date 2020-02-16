@@ -1,4 +1,4 @@
-import { CancellationToken, Disposable as IDisposable } from "@zxteam/contract";
+import { Disposable as IDisposable } from "@zxteam/contract";
 
 import { safeDispose } from "./safeDispose";
 
@@ -10,7 +10,7 @@ export abstract class Disposable implements IDisposable {
 	public get disposing(): boolean { return this._disposingPromise !== undefined; }
 
 	public dispose(): Promise<void> {
-		if (!this._disposed) {
+		if (this._disposed !== true) {
 			if (this._disposingPromise === undefined) {
 				const onDisposeResult = this.onDispose();
 				if (onDisposeResult instanceof Promise) {

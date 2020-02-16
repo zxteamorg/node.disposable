@@ -1,3 +1,5 @@
+import { assert } from "chai";
+
 import { safeDispose } from "../src";
 
 describe("safeDispose tests", function () {
@@ -23,9 +25,17 @@ describe("safeDispose tests", function () {
 		await safeDispose(obj);
 	});
 	it("should safe dispose suppress an error", async function () {
+		const testName = this.test?.title;
 		const obj = {
-			dispose: () => { throw new Error("Should be suppressed"); }
+			dispose: () => { throw new Error(`Should be suppressed. This is expected message produced by the test '${testName}'`); }
 		};
-		await safeDispose(obj);
+
+		let unexpectedErr: any;
+		try {
+			await safeDispose(obj);
+		} catch (e) {
+			unexpectedErr = e;
+		}
+		assert.isUndefined(unexpectedErr, "safeDispose should suppress any errors");
 	});
 });

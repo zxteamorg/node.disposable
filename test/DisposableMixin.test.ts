@@ -1,16 +1,19 @@
+import { Disposable } from "@zxteam/contract";
+
 import { assert } from "chai";
 
-import { Disposable } from "../src";
+import { DisposableMixin } from "../src";
 
 import * as tools from "./tools";
 
-describe("Disposable tests", function () {
+
+describe("DisposableMixin tests", function () {
 
 	let onDisposePromise: Promise<void> | null = null;
 
-	class TestDisposable extends Disposable {
-		public verifyNotDisposed() {
-			super.verifyNotDisposed();
+	class TestDisposable implements Disposable {
+		public throwIfDisposed() {
+			this.verifyNotDisposed();
 		}
 
 		protected onDispose(): void | Promise<void> {
@@ -19,13 +22,15 @@ describe("Disposable tests", function () {
 			}
 		}
 	}
+	interface TestDisposable extends DisposableMixin { }
+	DisposableMixin.applyMixin(TestDisposable);
 
 	it("Positive test onDispose(): Promise<void>", async function () {
 		const disposable = new TestDisposable();
 		assert.isFalse(disposable.disposed);
 		assert.isFalse(disposable.disposing);
 
-		disposable.verifyNotDisposed(); // should not raise an error
+		disposable.throwIfDisposed(); // should not raise an error
 
 		const defer = tools.Deferred.create();
 		onDisposePromise = defer.promise;
@@ -34,12 +39,12 @@ describe("Disposable tests", function () {
 			const disposablePromise = disposable.dispose().then(() => { disposablePromiseResolved = true; });
 
 			assert.isFalse(disposablePromiseResolved);
-			assert.throw(() => disposable.verifyNotDisposed());
+			assert.throw(() => disposable.throwIfDisposed());
 
 			await tools.nextTick();
 
 			assert.isFalse(disposablePromiseResolved);
-			assert.throw(() => disposable.verifyNotDisposed());
+			assert.throw(() => disposable.throwIfDisposed());
 
 			assert.isFalse(disposable.disposed);
 			assert.isTrue(disposable.disposing);
@@ -53,7 +58,7 @@ describe("Disposable tests", function () {
 
 			assert.isFalse(disposablePromiseResolved);
 			assert.isFalse(secondDisposablePromiseResolved);
-			assert.throw(() => disposable.verifyNotDisposed());
+			assert.throw(() => disposable.throwIfDisposed());
 			assert.isFalse(disposable.disposed);
 			assert.isTrue(disposable.disposing);
 
@@ -61,13 +66,13 @@ describe("Disposable tests", function () {
 
 			assert.isFalse(disposablePromiseResolved);
 			assert.isFalse(secondDisposablePromiseResolved);
-			assert.throw(() => disposable.verifyNotDisposed());
+			assert.throw(() => disposable.throwIfDisposed());
 
 			await tools.nextTick();
 
 			assert.isTrue(disposablePromiseResolved);
 			assert.isTrue(secondDisposablePromiseResolved);
-			assert.throw(() => disposable.verifyNotDisposed());
+			assert.throw(() => disposable.throwIfDisposed());
 
 			assert.isTrue(disposable.disposed);
 			assert.isFalse(disposable.disposing);
@@ -87,50 +92,36 @@ describe("Disposable tests", function () {
 		assert.isFalse(disposable.disposed);
 		assert.isFalse(disposable.disposing);
 
-		disposable.verifyNotDisposed(); // should not raise an error
+		disposable.throwIfDisposed(); // should not raise an error
 
 		const disposablePromise = disposable.dispose();
 
 		assert.isTrue(disposable.disposed);
 		assert.isFalse(disposable.disposing);
 
-		assert.throw(() => disposable.verifyNotDisposed());
+		assert.throw(() => disposable.throwIfDisposed());
 
 		await tools.nextTick();
 
-		assert.throw(() => disposable.verifyNotDisposed());
+		assert.throw(() => disposable.throwIfDisposed());
 
 		assert.isTrue(disposable.disposed);
 		assert.isFalse(disposable.disposing);
 
 		await disposablePromise;
 
-		assert.throw(() => disposable.verifyNotDisposed());
+		assert.throw(() => disposable.throwIfDisposed());
 
 		assert.isTrue(disposable.disposed);
 		assert.isFalse(disposable.disposing);
 	});
 
-	// it("Should execute and wait for disposable task", async function () {
-	// 	let onDisposeTaskCalled = false;
-	// 	const onDisposeTask: zxteam.Task = Task.create(() => {
-	// 		onDisposeTaskCalled = true;
-	// 	});
-
-	// 	class MyDisposable extends Disposable {
-	// 		protected onDispose(): Promise<void> { return onDisposeTask; }
-	// 	}
-
-	// 	const disposable = new MyDisposable();
-
-	// 	await disposable.dispose();
-	// 	assert.isTrue(onDisposeTaskCalled, "dispose() should execute dispose task");
-	// });
-
 	it("Should throw error from dispose()", async function () {
-		class MyDisposable extends Disposable {
+		class MyDisposable implements Disposable {
 			protected onDispose(): Promise<void> { return Promise.reject(new Error("test error")); }
 		}
+		interface MyDisposable extends DisposableMixin {}
+		DisposableMixin.applyMixin(MyDisposable);
 
 		const disposable = new MyDisposable();
 
