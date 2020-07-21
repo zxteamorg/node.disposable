@@ -25,7 +25,7 @@ describe("safeDispose tests", function () {
 		await safeDispose(obj);
 	});
 	it("should safe dispose suppress an error", async function () {
-		const testName = this.test?.title;
+		const testName = this.test!.title;
 		const obj = {
 			dispose: () => { throw new Error(`Should be suppressed. This is expected message produced by the test '${testName}'`); }
 		};
