@@ -20,10 +20,10 @@
 	],
 	"license": "MIT",
 	"devDependencies": {
-		"@types/node": "^11.15.3",
-		"@zxnode/build": "^0.0.34",
-		"@zxteam/cancellation": "^6.0.40",
-		"@zxteam/errors": "^6.0.41"
+		"@types/node": "^11.15.18",
+		"@zxnode/build": "^0.0.38",
+		"@zxteam/cancellation": "^6.0.62",
+		"@zxteam/errors": "^6.0.62"
 	},
 	"dependencies": {
 		"@zxteam/contract": "^6.0.56"
