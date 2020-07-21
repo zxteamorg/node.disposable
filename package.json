@@ -1,6 +1,6 @@
 {
 	"name": "@zxteam/disposable",
-	"version": "6.0.56",
+	"version": "6.0.62",
 	"description": "Implementation of Disposable and Initable interfaces",
 	"author": {
 		"name": "ZXTeam",
