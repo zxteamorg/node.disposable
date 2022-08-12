@@ -1,3 +1,7 @@
+# DEPRECATED
+
+The project has been moved to https://github.com/freemework/common/tree/src-typescript
+
 # ZXTeam's Disposable
 [![npm version badge](https://img.shields.io/npm/v/@zxteam/disposable.svg)](https://www.npmjs.com/package/@zxteam/disposable)
 [![downloads badge](https://img.shields.io/npm/dm/@zxteam/disposable.svg)](https://www.npmjs.org/package/@zxteam/disposable)
